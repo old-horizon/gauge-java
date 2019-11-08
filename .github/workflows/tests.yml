@@ -30,7 +30,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        java_version: [ '1.8', '11.x.x', '12.x.x' ]
+        java_version: [ '1.8', '11.x.x', '12.x.x', '13.x.x' ]
     steps:
 
       - uses: actions/checkout@v1
@@ -93,7 +93,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        java_version: [ '1.8', '11.x.x', '12.x.x' ]
+        java_version: [ '1.8', '11.x.x', '12.x.x', '13.x.x' ]
     steps:
       - uses: actions/checkout@v1
 
