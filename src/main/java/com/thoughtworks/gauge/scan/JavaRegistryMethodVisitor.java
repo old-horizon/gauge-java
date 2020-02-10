@@ -30,14 +30,14 @@ import com.thoughtworks.gauge.registry.StepRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RegistryMethodVisitor extends VoidVisitorAdapter {
+public class JavaRegistryMethodVisitor extends VoidVisitorAdapter {
 
     private StepValue stepValue;
     private StepRegistryEntry entry;
     private StepRegistry stepRegistry;
     private String file;
 
-    public RegistryMethodVisitor(StepRegistry stepRegistry, String file) {
+    public JavaRegistryMethodVisitor(StepRegistry stepRegistry, String file) {
         this.stepRegistry = stepRegistry;
         this.file = file;
     }

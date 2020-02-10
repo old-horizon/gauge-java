@@ -24,10 +24,14 @@ public class FileHelperTest {
         environmentVariables.set(GAUGE_PROJECT_ROOT, gaugeProjRoot);
 
         List<String> implFiles = FileHelper.getAllImplementationFiles();
-        assertEquals(3, implFiles.size());
-        List<String> expectedImplFiles = Arrays.asList(String.format("%s%sfiles%sformatted%sStepImpl.java", gaugeProjRoot, File.separator, File.separator, File.separator),
+        assertEquals(6, implFiles.size());
+        List<String> expectedImplFiles = Arrays.asList(
+                String.format("%s%sfiles%sformatted%sStepImpl.java", gaugeProjRoot, File.separator, File.separator, File.separator),
+                String.format("%s%sfiles%sformatted%sStepImpl.kt", gaugeProjRoot, File.separator, File.separator, File.separator),
                 String.format("%s%sfiles%sformatted%sStepImplWithComments.java", gaugeProjRoot, File.separator, File.separator, File.separator),
-                String.format("%s%sfiles%sunformatted%sUnFormattedStepImpl.java", gaugeProjRoot, File.separator, File.separator, File.separator));
+                String.format("%s%sfiles%sformatted%sStepImplWithComments.kt", gaugeProjRoot, File.separator, File.separator, File.separator),
+                String.format("%s%sfiles%sunformatted%sUnFormattedStepImpl.java", gaugeProjRoot, File.separator, File.separator, File.separator),
+                String.format("%s%sfiles%sunformatted%sUnFormattedStepImpl.kt", gaugeProjRoot, File.separator, File.separator, File.separator));
         assertTrue(expectedImplFiles.containsAll(implFiles));
     }
 

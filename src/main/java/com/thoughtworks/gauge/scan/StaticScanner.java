@@ -25,6 +25,10 @@ import com.thoughtworks.gauge.Step;
 import com.thoughtworks.gauge.StepRegistryEntry;
 import com.thoughtworks.gauge.StepValue;
 import com.thoughtworks.gauge.registry.StepRegistry;
+import kastree.ast.Node;
+import kastree.ast.Visitor;
+import kastree.ast.psi.Parser;
+import kastree.ast.psi.Parser.ParseError;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -35,6 +39,9 @@ import java.nio.file.Paths;
 import java.util.Set;
 
 public class StaticScanner {
+
+    private static final String JAVA_FILE_EXT = ".java";
+    private static final String KOTLIN_FILE_EXT = ".kt";
 
     private StepRegistry stepRegistry;
 
@@ -53,12 +60,34 @@ public class StaticScanner {
     }
 
     public void addStepsFromFileContents(String file, String contents) {
+        if (file.endsWith(JAVA_FILE_EXT)) {
+            addStepsFromJavaFileContents(file, contents);
+        } else if (file.endsWith(KOTLIN_FILE_EXT)) {
+            addStepsFromKotlinFileContents(file, contents);
+        } else {
+            throw new AssertionError("Unexpected file:" + file);
+        }
+    }
+
+    private void addStepsFromJavaFileContents(String file, String contents) {
         try {
             StringReader reader = new StringReader(contents);
             CompilationUnit compilationUnit = JavaParser.parse(reader);
-            RegistryMethodVisitor methodVisitor = new RegistryMethodVisitor(stepRegistry, file);
+            JavaRegistryMethodVisitor methodVisitor = new JavaRegistryMethodVisitor(stepRegistry, file);
             methodVisitor.visit(compilationUnit, null);
         } catch (ParseException e) {
+            Logger.error(String.format("Exception while adding steps from %s file:", file));
+            Logger.error(String.format("%s\n%s", e.getMessage(), e.getStackTrace()));
+        }
+    }
+
+    private void addStepsFromKotlinFileContents(String file, String contents) {
+        try {
+            Parser parser = new KotlinParser(contents);
+            Node.File fileNode = parser.parseFile(contents, true);
+            Visitor methodVisitor = new KotlinRegistryMethodVisitor(stepRegistry, file);
+            methodVisitor.visit(fileNode);
+        } catch (ParseError e) {
             Logger.error(String.format("Exception while adding steps from %s file:", file));
             Logger.error(String.format("%s\n%s", e.getMessage(), e.getStackTrace()));
         }

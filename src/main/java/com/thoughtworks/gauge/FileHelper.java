@@ -26,20 +26,23 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static com.google.common.io.Files.getNameWithoutExtension;
-import static com.thoughtworks.gauge.GaugeConstant.DEFAULT_SRC_DIR;
+import static com.thoughtworks.gauge.GaugeConstant.DEFAULT_JAVA_SRC_DIR;
+import static com.thoughtworks.gauge.GaugeConstant.DEFAULT_KOTLIN_SRC_DIR;
 import static com.thoughtworks.gauge.GaugeConstant.GAUGE_CUSTOM_COMPILE_DIR;
 import static com.thoughtworks.gauge.GaugeConstant.GAUGE_PROJECT_ROOT;
 
 public class FileHelper {
     private static final String CUSTOM_COMPILE_DIR_SEPARATOR = ",";
     private static final String JAVA_FILE_EXT = ".java";
+    private static final String KOTLIN_FILE_EXT = ".kt";
 
     public static List<String> getAllImplementationFiles() {
         ArrayList<String> outputFiles = new ArrayList<>();
         getStepImplDirs().forEach(dir -> {
             try (Stream<Path> filePathStream = Files.walk(Paths.get(dir))) {
                 filePathStream.forEach(filePath -> {
-                    if (Files.isRegularFile(filePath) && filePath.toString().endsWith(JAVA_FILE_EXT)) {
+                    if (Files.isRegularFile(filePath)
+                            && (filePath.toString().endsWith(JAVA_FILE_EXT) || filePath.toString().endsWith(KOTLIN_FILE_EXT))) {
                         outputFiles.add(filePath.toString());
                     }
                 });
@@ -62,7 +65,8 @@ public class FileHelper {
             Arrays.asList(customCompileDirs.split(CUSTOM_COMPILE_DIR_SEPARATOR))
                     .forEach(d -> srcDirs.add(getAbsolutePath(d.trim()).toString()));
         } else {
-            srcDirs.add(getDefaultStepImplDir());
+            srcDirs.add(getDefaultJavaStepImplDir());
+            srcDirs.add(getDefaultKotlinStepImplDir());
         }
         return srcDirs;
     }
@@ -74,12 +78,16 @@ public class FileHelper {
 
     public static File getDefaultImplFileName(String suffix, int count) {
         String filename = "StepImplementation" + suffix + JAVA_FILE_EXT;
-        Path filepath = Paths.get(getDefaultStepImplDir(), filename);
+        Path filepath = Paths.get(getDefaultJavaStepImplDir(), filename);
         File file = new File(filepath.toString());
         return file.exists() ? getDefaultImplFileName(String.valueOf(++count), count) : file;
     }
 
-    private static String getDefaultStepImplDir() {
-        return getAbsolutePath(DEFAULT_SRC_DIR).toString();
+    private static String getDefaultJavaStepImplDir() {
+        return getAbsolutePath(DEFAULT_JAVA_SRC_DIR).toString();
+    }
+
+    private static String getDefaultKotlinStepImplDir() {
+        return getAbsolutePath(DEFAULT_KOTLIN_SRC_DIR).toString();
     }
 }

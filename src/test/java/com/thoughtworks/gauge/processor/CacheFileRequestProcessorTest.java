@@ -21,121 +21,152 @@ import com.thoughtworks.gauge.scan.StaticScanner;
 import gauge.messages.Messages;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 
 import static org.junit.Assert.*;
 
+@RunWith(Enclosed.class)
 public class CacheFileRequestProcessorTest {
 
+    public static class Java extends CacheFileRequestProcessorTestBase {
+        @Override
+        String implFileRelativePath() {
+            return String.format("src%stest%sresources%stest%sfiles%sfoo.java", File.separator, File.separator, File.separator, File.separator, File.separator);
+        }
 
-    private String implFile;
-    private String contents;
-    private String fooAliasesFilePath;
-    private String fooAliasesContents;
-    private StaticScanner staticScanner;
-
-    @Before
-    public void setUp(){
-        staticScanner = new StaticScanner();
-        String implFileRelativePath = String.format("src%stest%sresources%stest%sfiles%sfoo.java", File.separator, File.separator, File.separator, File.separator, File.separator);
-        implFile = Util.workingDir() + File.separator + implFileRelativePath;
-        contents = staticScanner.readFile(implFile, Charsets.UTF_8);
-
-        String fooAliasesImplFileRelativePath = String.format("src%stest%sresources%stest%sfiles%sfooAliases.java", File.separator, File.separator, File.separator, File.separator, File.separator);
-        fooAliasesFilePath = Util.workingDir() + File.separator + fooAliasesImplFileRelativePath;
-        fooAliasesContents = staticScanner.readFile(fooAliasesFilePath, Charsets.UTF_8);
+        @Override
+        String fooAliasesImplFileRelativePath() {
+            return String.format("src%stest%sresources%stest%sfiles%sfooAliases.java", File.separator, File.separator, File.separator, File.separator, File.separator);
+        }
     }
 
-    @Test
-    public void shouldProcessRequestWithFileOpenedStatus() {
-        CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
-        Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
-                .setFilePath(implFile)
-                .setContent(contents)
-                .setStatus(Messages.CacheFileRequest.FileStatus.OPENED).build();
+    public static class Kotlin extends CacheFileRequestProcessorTestBase {
+        @Override
+        String implFileRelativePath() {
+            return String.format("src%stest%sresources%stest%sfiles%sfoo.kt", File.separator, File.separator, File.separator, File.separator, File.separator);
+        }
 
-        Messages.Message request = Messages.Message.newBuilder()
-                .setMessageType(Messages.Message.MessageType.CacheFileRequest)
-                .setMessageId(1l)
-                .setCacheFileRequest(cacheFileRequest).build();
-        cacheFileRequestProcessor.process(request);
-
-        assertTrue(staticScanner.getRegistry().contains("new step"));
-
+        @Override
+        String fooAliasesImplFileRelativePath() {
+            return String.format("src%stest%sresources%stest%sfiles%sfooAliases.kt", File.separator, File.separator, File.separator, File.separator, File.separator);
+        }
     }
 
-    @Test
-    public void ShouldProcessRequestWithDeletedStatus() {
-        staticScanner.addStepsFromFileContents(implFile, contents);
-        CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
-        Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
-                .setFilePath(implFile)
-                .setStatus(Messages.CacheFileRequest.FileStatus.DELETED).build();
+    private static abstract class CacheFileRequestProcessorTestBase {
 
-        Messages.Message request = Messages.Message.newBuilder()
-                .setMessageType(Messages.Message.MessageType.CacheFileRequest)
-                .setMessageId(1l)
-                .setCacheFileRequest(cacheFileRequest).build();
+        private String implFile;
+        private String contents;
+        private String fooAliasesFilePath;
+        private String fooAliasesContents;
+        private StaticScanner staticScanner;
 
-        assertTrue(staticScanner.getRegistry().contains("new step"));
-        cacheFileRequestProcessor.process(request);
-        assertFalse(staticScanner.getRegistry().contains("new step"));
-    }
+        abstract String implFileRelativePath();
 
-    @Test
-    public void shouldProcessRequestWithClosedStatus() {
-        staticScanner.addStepsFromFileContents(implFile, contents);
-        CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
-        Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
-                .setFilePath(implFile)
-                .setStatus(Messages.CacheFileRequest.FileStatus.CLOSED).build();
+        abstract String fooAliasesImplFileRelativePath();
 
-        Messages.Message request = Messages.Message.newBuilder()
-                .setMessageType(Messages.Message.MessageType.CacheFileRequest)
-                .setMessageId(1l)
-                .setCacheFileRequest(cacheFileRequest).build();
-        String stepValue = "StepValue{stepText='new step', parameterizedStepText='new step', parameters=[]}";
-        assertEquals(stepValue, staticScanner.getRegistry().get("new step").getStepValue().toString());
-        cacheFileRequestProcessor.process(request);
-        assertEquals(stepValue, staticScanner.getRegistry().get("new step").getStepValue().toString());
-    }
+        @Before
+        public void setUp() {
+            staticScanner = new StaticScanner();
+            implFile = Util.workingDir() + File.separator + implFileRelativePath();
+            contents = staticScanner.readFile(implFile, Charsets.UTF_8);
 
-    @Test
-    public void shouldNotProcessRequestWithCreateStatusIfFileIsCached() {
-        // load contents from different file.
-        staticScanner.addStepsFromFileContents(implFile, fooAliasesContents);
-        CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
-        Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
-                .setFilePath(implFile)
-                .setStatus(Messages.CacheFileRequest.FileStatus.CREATED).build();
+            fooAliasesFilePath = Util.workingDir() + File.separator + fooAliasesImplFileRelativePath();
+            fooAliasesContents = staticScanner.readFile(fooAliasesFilePath, Charsets.UTF_8);
+        }
 
-        Messages.Message request = Messages.Message.newBuilder()
-                .setMessageType(Messages.Message.MessageType.CacheFileRequest)
-                .setMessageId(1l)
-                .setCacheFileRequest(cacheFileRequest).build();
+        @Test
+        public void shouldProcessRequestWithFileOpenedStatus() {
+            CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
+            Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
+                    .setFilePath(implFile)
+                    .setContent(contents)
+                    .setStatus(Messages.CacheFileRequest.FileStatus.OPENED).build();
 
-        assertTrue(staticScanner.getRegistry().get("new step").getHasAlias());
+            Messages.Message request = Messages.Message.newBuilder()
+                    .setMessageType(Messages.Message.MessageType.CacheFileRequest)
+                    .setMessageId(1l)
+                    .setCacheFileRequest(cacheFileRequest).build();
+            cacheFileRequestProcessor.process(request);
 
-        cacheFileRequestProcessor.process(request);
-        assertTrue(staticScanner.getRegistry().get("new step").getHasAlias());
-    }
+            assertTrue(staticScanner.getRegistry().contains("new step"));
 
-    @Test
-    public void shouldProcessRequestWithCreateStatusIfFileIsNotCached() {
-        CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
-        Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
-                .setFilePath(implFile)
-                .setStatus(Messages.CacheFileRequest.FileStatus.CREATED).build();
+        }
 
-        Messages.Message request = Messages.Message.newBuilder()
-                .setMessageType(Messages.Message.MessageType.CacheFileRequest)
-                .setMessageId(1l)
-                .setCacheFileRequest(cacheFileRequest).build();
+        @Test
+        public void ShouldProcessRequestWithDeletedStatus() {
+            staticScanner.addStepsFromFileContents(implFile, contents);
+            CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
+            Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
+                    .setFilePath(implFile)
+                    .setStatus(Messages.CacheFileRequest.FileStatus.DELETED).build();
 
-        assertFalse(staticScanner.getRegistry().contains("new step"));
+            Messages.Message request = Messages.Message.newBuilder()
+                    .setMessageType(Messages.Message.MessageType.CacheFileRequest)
+                    .setMessageId(1l)
+                    .setCacheFileRequest(cacheFileRequest).build();
 
-        cacheFileRequestProcessor.process(request);
-        assertTrue(staticScanner.getRegistry().contains("new step"));
+            assertTrue(staticScanner.getRegistry().contains("new step"));
+            cacheFileRequestProcessor.process(request);
+            assertFalse(staticScanner.getRegistry().contains("new step"));
+        }
+
+        @Test
+        public void shouldProcessRequestWithClosedStatus() {
+            staticScanner.addStepsFromFileContents(implFile, contents);
+            CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
+            Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
+                    .setFilePath(implFile)
+                    .setStatus(Messages.CacheFileRequest.FileStatus.CLOSED).build();
+
+            Messages.Message request = Messages.Message.newBuilder()
+                    .setMessageType(Messages.Message.MessageType.CacheFileRequest)
+                    .setMessageId(1l)
+                    .setCacheFileRequest(cacheFileRequest).build();
+            String stepValue = "StepValue{stepText='new step', parameterizedStepText='new step', parameters=[]}";
+            assertEquals(stepValue, staticScanner.getRegistry().get("new step").getStepValue().toString());
+            cacheFileRequestProcessor.process(request);
+            assertEquals(stepValue, staticScanner.getRegistry().get("new step").getStepValue().toString());
+        }
+
+        @Test
+        public void shouldNotProcessRequestWithCreateStatusIfFileIsCached() {
+            // load contents from different file.
+            staticScanner.addStepsFromFileContents(implFile, fooAliasesContents);
+            CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
+            Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
+                    .setFilePath(implFile)
+                    .setStatus(Messages.CacheFileRequest.FileStatus.CREATED).build();
+
+            Messages.Message request = Messages.Message.newBuilder()
+                    .setMessageType(Messages.Message.MessageType.CacheFileRequest)
+                    .setMessageId(1l)
+                    .setCacheFileRequest(cacheFileRequest).build();
+
+            assertTrue(staticScanner.getRegistry().get("new step").getHasAlias());
+
+            cacheFileRequestProcessor.process(request);
+            assertTrue(staticScanner.getRegistry().get("new step").getHasAlias());
+        }
+
+        @Test
+        public void shouldProcessRequestWithCreateStatusIfFileIsNotCached() {
+            CacheFileRequestProcessor cacheFileRequestProcessor = new CacheFileRequestProcessor(staticScanner);
+            Messages.CacheFileRequest cacheFileRequest = Messages.CacheFileRequest.newBuilder()
+                    .setFilePath(implFile)
+                    .setStatus(Messages.CacheFileRequest.FileStatus.CREATED).build();
+
+            Messages.Message request = Messages.Message.newBuilder()
+                    .setMessageType(Messages.Message.MessageType.CacheFileRequest)
+                    .setMessageId(1l)
+                    .setCacheFileRequest(cacheFileRequest).build();
+
+            assertFalse(staticScanner.getRegistry().contains("new step"));
+
+            cacheFileRequestProcessor.process(request);
+            assertTrue(staticScanner.getRegistry().contains("new step"));
+        }
     }
 }

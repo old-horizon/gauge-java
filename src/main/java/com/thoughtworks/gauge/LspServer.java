@@ -25,6 +25,7 @@ import io.grpc.stub.StreamObserver;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class LspServer extends lspServiceGrpc.lspServiceImplBase {
     private MessageDispatcher messageDispatcher;
@@ -138,7 +139,8 @@ public class LspServer extends lspServiceGrpc.lspServiceImplBase {
 
     @Override
     public void getGlobPatterns(Lsp.Empty request, StreamObserver<Messages.ImplementationFileGlobPatternResponse> responseObserver) {
-        List<String> patterns = FileHelper.getStepImplDirs().stream().map(dir -> dir + "/**/*.java").collect(Collectors.toList());
+        List<String> patterns = FileHelper.getStepImplDirs().stream()
+                .flatMap(dir -> Stream.of(dir + "/**/*.java", dir + "/**/*.kt")).collect(Collectors.toList());
         responseObserver.onNext(Messages.ImplementationFileGlobPatternResponse.newBuilder().addAllGlobPatterns(patterns).build());
         responseObserver.onCompleted();
     }
